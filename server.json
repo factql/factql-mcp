@@ -1,0 +1,43 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.factql/factql-mcp",
+  "title": "FactQL",
+  "description": "Ask plain-English questions of your database: answers, the SQL that ran, and the rows.",
+  "websiteUrl": "https://factql.ai",
+  "repository": {
+    "url": "https://github.com/factql/factql-mcp",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "factql-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "FACTQL_API_KEY",
+          "description": "FactQL API key (an ask-only key is enough)",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "FACTQL_BASE_URL",
+          "description": "FactQL API base URL",
+          "default": "https://api.factql.ai"
+        },
+        {
+          "name": "FACTQL_WORKSPACE_ID",
+          "description": "Default workspace, for tenants that use workspaces"
+        },
+        {
+          "name": "FACTQL_END_USER_ID",
+          "description": "Who is asking; defaults to mcp:<os user>"
+        }
+      ]
+    }
+  ]
+}
