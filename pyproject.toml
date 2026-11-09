@@ -1,7 +1,7 @@
 [project]
 name = "factql-mcp"
-version = "0.1.0"
-description = "MCP server for FactQL: ask plain-English questions of your database from Claude, Cursor or any MCP client."
+version = "0.1.1"
+description = "FactQL MCP server. Verified answers from your data, with the query and rows behind them, or a decline, never a guess."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

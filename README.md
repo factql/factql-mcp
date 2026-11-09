@@ -1,12 +1,20 @@
 # factql-mcp
 
-Ask plain-English questions of your business data from Claude Desktop, Claude Code, Cursor, or any MCP client. [FactQL](https://factql.ai) turns the question into SQL, runs it read-only against your connected database, and returns the answer, the SQL it ran, and the rows.
+**FactQL is the harness around the model.**
+
+Ask a question about your data. FactQL runs the query, checks the result before you see an answer, and declines instead of guessing when it can't verify.
+
+Every answer ships with the query that ran, the rows it returned and the lineage behind it. One API call. Works with Postgres, MySQL, DuckDB, uploaded CSV and XLSX files, and PDFs with cited answers.
+
+Built for developers putting AI near real data: AI apps, agents and internal tools that can't afford a confident wrong number.
+
+This package is FactQL's MCP server: it brings those answers into Claude Desktop, Claude Code, Cursor, or any MCP client. Learn more at [factql.ai](https://factql.ai).
 
 <!-- mcp-name: io.github.factql/factql-mcp -->
 
 ## Get a key
 
-Sign up free at [factql.ai/signup](https://factql.ai/signup), connect your database, and create an API key. An ask-only key is enough for this server.
+Sign up free at [factql.ai/signup](https://factql.ai/signup), connect your data, and create an API key. An ask-only key is enough for this server.
 
 ## Install
 

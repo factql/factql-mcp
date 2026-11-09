@@ -2,21 +2,23 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.factql/factql-mcp",
   "title": "FactQL",
-  "description": "Ask plain-English questions of your database: answers, the SQL that ran, and the rows.",
+  "description": "Verified answers from your data, with the query and rows behind them, or a decline, never a guess.",
   "websiteUrl": "https://factql.ai",
   "repository": {
     "url": "https://github.com/factql/factql-mcp",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "factql-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "runtimeHint": "uvx",
-      "transport": { "type": "stdio" },
+      "transport": {
+        "type": "stdio"
+      },
       "environmentVariables": [
         {
           "name": "FACTQL_API_KEY",
