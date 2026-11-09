@@ -23,6 +23,11 @@ from mcp.server import MCPServer
 
 BASE_URL = os.environ.get("FACTQL_BASE_URL", "https://api.factql.ai").rstrip("/")
 ROW_CAP = 50
+DECLINED_NOTE = (
+    "FactQL could not verify an answer, so it gave none rather than guess. "
+    "This is deliberate, not a tool failure: tell the user the reason and do "
+    "not supply a figure yourself."
+)
 _PASS_THROUGH = (
     "type",
     "result",
@@ -77,6 +82,14 @@ def _error(res: httpx.Response) -> dict[str, Any]:
 
 def shape_answer(payload: dict[str, Any]) -> dict[str, Any]:
     """Keep what a model needs from an /ask-shaped payload; cap the rows."""
+    if payload.get("result") == "error":
+        # The API call succeeded; FactQL chose not to give a figure it couldn't
+        # verify. Say so, so the client doesn't read it as a broken tool.
+        return {
+            "result": "declined",
+            "reason": payload.get("error") or payload.get("explanation"),
+            "note": DECLINED_NOTE,
+        }
     out = {k: payload[k] for k in _PASS_THROUGH if payload.get(k) is not None}
     data = payload.get("data") or {}
     rows = data.get("rows") or []
@@ -112,7 +125,9 @@ def ask(
     `workspace_id` scopes the question when the tenant uses workspaces
     (see `whoami`); `locale` is "en-GB" or "en-US" for the answer's wording.
     A `needs_clarification` result means the question was too vague: ask the
-    user, then call again with the detail."""
+    user, then call again with the detail. A `declined` result means FactQL
+    could not verify an answer and chose not to guess: pass the `reason` on
+    and don't invent a figure."""
     body: dict[str, Any] = {"q": question}
     ws = workspace_id or os.environ.get("FACTQL_WORKSPACE_ID")
     if ws:

@@ -27,3 +27,10 @@ def test_shape_answer_passes_clarification_through():
         "result": "needs_clarification",
         "clarification_request": "Which year?",
     }
+
+
+def test_shape_answer_marks_a_decline_as_deliberate():
+    msg = "I couldn't find a reliable way to answer this from your data."
+    out = shape_answer({"result": "error", "error": msg, "explanation": msg})
+    assert out["result"] == "declined" and out["reason"] == msg
+    assert "error" not in out and "not a tool failure" in out["note"]
