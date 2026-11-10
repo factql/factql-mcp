@@ -10,6 +10,20 @@ Built for developers putting AI near real data: AI apps, agents and internal too
 
 This package is FactQL's MCP server: it brings those answers into Claude Desktop, Claude Code, Cursor, or any MCP client. Learn more at [factql.ai](https://factql.ai).
 
+## Hosted server (no install)
+
+FactQL also runs this server for you at:
+
+```
+https://api.factql.ai/mcp
+```
+
+Add it as a remote (Streamable HTTP) MCP server in Claude (Settings → Connectors → Add custom connector; works on web, desktop and mobile), Claude Code (`claude mcp add --transport http factql https://api.factql.ai/mcp`), Cursor, VS Code, or any app that supports remote MCP. The app opens a FactQL sign-in page; click **Allow** and its questions run as you. Disconnect under Settings → Connected apps on factql.ai. Apps that can't sign in can send an API key as `Authorization: Bearer fl_live_...` instead.
+
+Setup for each app: [docs.factql.ai/guides/mcp](https://docs.factql.ai/guides/mcp/).
+
+The rest of this README is for running the server yourself.
+
 <!-- mcp-name: io.github.factql/factql-mcp -->
 
 ## Get a key
