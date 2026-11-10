@@ -8,7 +8,7 @@
     "url": "https://github.com/factql/factql-mcp",
     "source": "github"
   },
-  "version": "0.1.2",
+  "version": "0.1.3",
   "packages": [
     {
       "registryType": "pypi",
@@ -40,6 +40,12 @@
           "description": "Who is asking; defaults to mcp:<os user>"
         }
       ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.factql.ai/mcp"
     }
   ]
 }
