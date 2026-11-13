@@ -34,3 +34,36 @@ def test_shape_answer_marks_a_decline_as_deliberate():
     out = shape_answer({"result": "error", "error": msg, "explanation": msg})
     assert out["result"] == "declined" and out["reason"] == msg
     assert "error" not in out and "not a tool failure" in out["note"]
+
+
+def test_slow_ask_sends_progress_then_the_answer(monkeypatch):
+    import asyncio
+
+    import httpx
+    from mcp import Client
+
+    from factql_mcp import server as srv
+
+    async def slow_query(body):
+        await asyncio.sleep(0.3)
+        return httpx.Response(200, json={"result": "success", "answer": "42"})
+
+    monkeypatch.setenv("FACTQL_API_KEY", "test")
+    monkeypatch.setattr(srv, "PROGRESS_EVERY", 0.05)
+    monkeypatch.setattr(srv, "_post_query", slow_query)
+    notes = []
+
+    async def on_progress(progress, total, message):
+        notes.append(message)
+
+    async def run():
+        async with Client(srv.server) as c:
+            tools = {t.name: t for t in (await c.list_tools()).tools}
+            assert "ctx" not in tools["ask"].input_schema["properties"]
+            return await c.call_tool(
+                "ask", {"question": "how many?"}, progress_callback=on_progress
+            )
+
+    res = asyncio.run(run())
+    assert not res.is_error and '"42"' in res.content[0].text
+    assert notes and "still working" in notes[0]
