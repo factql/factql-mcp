@@ -14,15 +14,19 @@ conversation, so a follow-up must restate what it refers to.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import getpass
 import os
 from typing import Any, Optional
 
 import httpx
 from mcp.server import MCPServer
+from mcp.server.mcpserver import Context
 
 BASE_URL = os.environ.get("FACTQL_BASE_URL", "https://api.factql.ai").rstrip("/")
 ROW_CAP = 50
+PROGRESS_EVERY = 5.0  # seconds between "still working" notes on a slow answer
 DECLINED_NOTE = (
     "FactQL could not verify an answer, so it gave none rather than guess. "
     "This is deliberate, not a tool failure: tell the user the reason and do "
@@ -72,6 +76,38 @@ def _client() -> httpx.Client:
     return httpx.Client(base_url=BASE_URL, headers=_headers(), timeout=120.0)
 
 
+async def _with_progress(ctx: Context, coro):
+    """Await ``coro``, sending a progress note every PROGRESS_EVERY seconds.
+
+    The SDK only sends a note when the client asked for progress, so this is
+    silent otherwise. A failed note never fails the question."""
+    loop = asyncio.get_running_loop()
+    task = asyncio.ensure_future(coro)
+    start = loop.time()
+    try:
+        while True:
+            done, _ = await asyncio.wait({task}, timeout=PROGRESS_EVERY)
+            if done:
+                return task.result()
+            secs = int(loop.time() - start)
+            with contextlib.suppress(Exception):
+                await ctx.report_progress(
+                    secs, message=f"FactQL is still working on the answer ({secs}s)…"
+                )
+    finally:
+        if not task.done():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await task
+
+
+async def _post_query(body: dict[str, Any]) -> httpx.Response:
+    async with httpx.AsyncClient(
+        base_url=BASE_URL, headers=_headers(), timeout=120.0
+    ) as c:
+        return await c.post("/query", json=body)
+
+
 def _error(res: httpx.Response) -> dict[str, Any]:
     try:
         detail = res.json()
@@ -114,8 +150,9 @@ def whoami() -> dict[str, Any]:
 
 
 @server.tool()
-def ask(
+async def ask(
     question: str,
+    ctx: Context,
     workspace_id: Optional[str] = None,
     locale: Optional[str] = None,
 ) -> dict[str, Any]:
@@ -134,8 +171,7 @@ def ask(
         body["workspace_id"] = ws
     if locale:
         body["locale"] = locale
-    with _client() as c:
-        res = c.post("/query", json=body)
+    res = await _with_progress(ctx, _post_query(body))
     if not res.is_success:
         return _error(res)
     payload = res.json()
