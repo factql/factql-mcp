@@ -87,3 +87,7 @@ uv run --with pytest pytest -q
 ## License
 
 MIT
+
+## Questions and feedback
+
+Ask in [Discussions](https://github.com/factql/factql-mcp/discussions) or email ask@factql.ai. Bugs go in [Issues](https://github.com/factql/factql-mcp/issues).
