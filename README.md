@@ -2,7 +2,7 @@
 
 **FactQL is the harness around the model.**
 
-Ask a question about your data. FactQL runs the query, checks the result before you see an answer, and declines instead of guessing when it can't verify.
+Verified answers from your data, with the query and rows behind them, or a decline, never a guess.
 
 Every answer ships with the query that ran, the rows it returned and the lineage behind it. One API call. Works with Postgres, MySQL, DuckDB, uploaded CSV and XLSX files, and PDFs with cited answers.
 
@@ -76,7 +76,7 @@ Each `ask` is stateless: the MCP client carries the conversation, so a follow-up
 
 ## Safety
 
-FactQL only runs `SELECT` queries, under a statement timeout, and only against the tables your admin has enabled. The key's permissions decide what it can see; this server adds nothing on top.
+FactQL only runs read-only `SELECT` queries, under a statement timeout, and only against the tables your admin has described to it (inside a workspace, only that workspace's tables). The key's permissions decide what it can see; this server adds nothing on top.
 
 ## Development
 
