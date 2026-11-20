@@ -1,10 +1,8 @@
 # factql-mcp
 
-**FactQL is the harness around the model.**
+Ask your database questions in plain English from Claude, Claude Code, Cursor, VS Code or any MCP client.
 
-Verified answers from your data, with the query and rows behind them, or a decline, never a guess.
-
-Every answer ships with the query that ran, the rows it returned and the lineage behind it. One API call. Works with Postgres, MySQL, DuckDB, uploaded CSV and XLSX files, and PDFs with cited answers.
+Each answer comes with the SQL that ran and the rows it returned, so you can check the number. Works with Postgres, MySQL, DuckDB, uploaded CSV and XLSX files, and PDFs.
 
 Built for developers putting AI near real data: AI apps, agents and internal tools that can't afford a confident wrong number.
 
