@@ -18,7 +18,7 @@ import asyncio
 import contextlib
 import getpass
 import os
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from mcp.server import MCPServer
@@ -31,6 +31,20 @@ DECLINED_NOTE = (
     "FactQL could not verify an answer, so it gave none rather than guess. "
     "This is deliberate, not a tool failure: tell the user the reason and do "
     "not supply a figure yourself."
+)
+ERROR_NOTE = (
+    "FactQL could not produce an answer to this question. Tell the user the "
+    "reason and do not supply a figure yourself."
+)
+# Setup states: a normal result with its own code and one sentence saying what
+# to do next, so the model relays it. Same codes and words as the hosted server.
+NO_DATA = (
+    "No data is connected to this FactQL workspace yet. Add a database or "
+    "upload a CSV or Excel file at https://factql.ai, then ask again."
+)
+SCHEMA_NOT_READY = "Your data is still being prepared. Try again in a minute or two."
+EMAIL_UNVERIFIED = (
+    "Verify your email to start asking. Check your inbox for the link from FactQL."
 )
 _PASS_THROUGH = (
     "type",
@@ -116,16 +130,42 @@ def _error(res: httpx.Response) -> dict[str, Any]:
     return {"error": f"HTTP {res.status_code}", "detail": detail}
 
 
+def _state(code: str, message: str) -> dict[str, Any]:
+    return {"result": code, "message": message}
+
+
+def explain(res: httpx.Response) -> dict[str, Any] | None:
+    """The setup states FactQL signals (no data, schema not ready, email not
+    verified, plan limit), as a tool result; ``None`` for anything else."""
+    try:
+        body = res.json()
+    except ValueError:
+        return None
+    if not isinstance(body, dict):
+        return None
+    detail = body.get("detail")
+    code = detail.get("error") if isinstance(detail, dict) else None
+    if res.status_code == 403 and code == "email_unverified":
+        return _state("email_unverified", EMAIL_UNVERIFIED)
+    if res.status_code == 402 and code == "budget_exceeded":
+        return _state("limit_reached", detail.get("message") or "")
+    if res.status_code == 422 and res.headers.get("x-factql-reason") == "no_data":
+        return _state("no_data", NO_DATA)
+    if res.is_success and body.get("kind") == "workspace_preparing":
+        return _state("schema_not_ready", SCHEMA_NOT_READY)
+    return None
+
+
 def shape_answer(payload: dict[str, Any]) -> dict[str, Any]:
-    """Keep what a model needs from an /ask-shaped payload; cap the rows."""
+    """Keep what a model needs from an /ask-shaped payload; cap the rows.
+    Same shape as the hosted server."""
     if payload.get("result") == "error":
-        # The API call succeeded; FactQL chose not to give a figure it couldn't
-        # verify. Say so, so the client doesn't read it as a broken tool.
-        return {
-            "result": "declined",
-            "reason": payload.get("error") or payload.get("explanation"),
-            "note": DECLINED_NOTE,
-        }
+        reason = payload.get("error") or payload.get("explanation")
+        if payload.get("kind") == "decline":
+            # FactQL chose not to give a figure it couldn't verify. Say so, so
+            # the client doesn't read it as a broken tool.
+            return {"result": "declined", "reason": reason, "note": DECLINED_NOTE}
+        return {"result": "error", "reason": reason, "note": ERROR_NOTE}
     out = {k: payload[k] for k in _PASS_THROUGH if payload.get(k) is not None}
     data = payload.get("data") or {}
     rows = data.get("rows") or []
@@ -143,18 +183,24 @@ def whoami() -> dict[str, Any]:
     """What this API key can see: tenant, plan, and the workspaces it may query.
 
     Use it to find a `workspace_id` before calling `ask` on a tenant that
-    uses workspaces."""
+    uses workspaces. `has_data` false means nothing is connected yet: `ask`
+    would return `no_data`, so pass the `note` on instead."""
     with _client() as c:
         res = c.get("/whoami")
-    return res.json() if res.is_success else _error(res)
+    if not res.is_success:
+        return explain(res) or _error(res)
+    out = res.json()
+    if isinstance(out, dict) and out.get("has_data") is False:
+        out["note"] = NO_DATA
+    return out
 
 
 @server.tool()
 async def ask(
     question: str,
     ctx: Context,
-    workspace_id: Optional[str] = None,
-    locale: Optional[str] = None,
+    workspace_id: str | None = None,
+    locale: str | None = None,
 ) -> dict[str, Any]:
     """Ask a plain-English question about the connected data.
 
@@ -164,7 +210,9 @@ async def ask(
     A `needs_clarification` result means the question was too vague: ask the
     user, then call again with the detail. A `declined` result means FactQL
     could not verify an answer and chose not to guess: pass the `reason` on
-    and don't invent a figure."""
+    and don't invent a figure. A `no_data`, `schema_not_ready`,
+    `email_unverified` or `limit_reached` result means FactQL can't answer
+    yet: tell the user the `message`, which says what to do next."""
     body: dict[str, Any] = {"q": question}
     ws = workspace_id or os.environ.get("FACTQL_WORKSPACE_ID")
     if ws:
@@ -172,6 +220,9 @@ async def ask(
     if locale:
         body["locale"] = locale
     res = await _with_progress(ctx, _post_query(body))
+    special = explain(res)
+    if special:
+        return special
     if not res.is_success:
         return _error(res)
     payload = res.json()

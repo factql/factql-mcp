@@ -67,8 +67,17 @@ claude mcp add factql -e FACTQL_API_KEY=fl_live_... -- uvx factql-mcp
 
 ## Tools
 
-- `whoami()` — the tenant, plan, and workspaces this key can query.
-- `ask(question, workspace_id?, locale?)` — the answer, the SQL that ran, and up to 50 rows. A `needs_clarification` result means the question was too vague; ask the user and call again with the detail. A `declined` result means FactQL couldn't verify an answer and gave none rather than guess; the `reason` says why. `locale` is `en-GB` or `en-US`.
+- `whoami()` — the tenant, plan, and workspaces this key can query, and `has_data`: whether anything is connected yet.
+- `ask(question, workspace_id?, locale?)` — the answer, the SQL that ran, and up to 50 rows. A `needs_clarification` result means the question was too vague; ask the user and call again with the detail. A `declined` result means FactQL couldn't verify an answer and gave none rather than guess; the `reason` says why. An `error` result is a real failure, also with a `reason`. `locale` is `en-GB` or `en-US`.
+
+When FactQL can't answer yet, `ask` returns one of these, with a `message` saying what to do next:
+
+| `result` | `message` |
+|---|---|
+| `no_data` | No data is connected to this FactQL workspace yet. Add a database or upload a CSV or Excel file at https://factql.ai, then ask again. |
+| `schema_not_ready` | Your data is still being prepared. Try again in a minute or two. |
+| `email_unverified` | Verify your email to start asking. Check your inbox for the link from FactQL. |
+| `limit_reached` | The plan-limit message from FactQL, unchanged. |
 
 Each `ask` is stateless: the MCP client carries the conversation, so a follow-up should restate what it refers to.
 
