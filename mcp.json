@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "factql": {
+      "url": "https://api.factql.ai/mcp"
+    }
+  }
+}

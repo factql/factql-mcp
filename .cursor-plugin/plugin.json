@@ -1,0 +1,20 @@
+{
+  "name": "factql",
+  "displayName": "FactQL",
+  "version": "0.1.0",
+  "description": "Ask plain-English questions of your database from Cursor. Every answer comes with the SQL that ran and the rows behind it.",
+  "author": {
+    "name": "FactQL",
+    "email": "ask@factql.ai"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "database",
+    "sql",
+    "postgres",
+    "mysql",
+    "duckdb",
+    "analytics"
+  ]
+}
