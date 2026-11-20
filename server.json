@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.factql/factql-mcp",
   "title": "FactQL",
-  "description": "Verified answers from your data, with the query and rows behind them, or a decline, never a guess.",
+  "description": "Ask plain-English questions of your database: answers, the SQL that ran, and the rows.",
   "websiteUrl": "https://factql.ai",
   "repository": {
     "url": "https://github.com/factql/factql-mcp",
